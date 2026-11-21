@@ -10,7 +10,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   /* ---- colors: edit these ---- */
-  :root, body.lena { --bg:#7a5fc9; --line:rgba(255,255,255,.14); --ring:#c9b6ff; }  /* Lena: purple */
+  :root { --bg:#fff3b8; --line:rgba(255,255,255,.14); --ring:#c9b6ff; }  /* home screen: light yellow */
+  body.lena { --bg:#7a5fc9; --line:rgba(255,255,255,.14); --ring:#c9b6ff; }  /* Lena: purple */
   body.miu         { --bg:#a9744a; --line:rgba(255,255,255,.14); --ring:#e7c39a; }  /* Miu: brown  */
   :root { --ink:#2b1b4a; --cream:#fff6e5; --yellow:#ffd84a; }
 
@@ -25,7 +26,8 @@
 
   /* ---------- home screen ---------- */
   #home-page { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:30px; padding:20px; text-align:center; }
-  #home-page h1 { margin:0; font-size:clamp(30px, 9vw, 44px); line-height:1.1; font-weight:700; }
+  #home-page h1 { margin:0; font-size:clamp(30px, 9vw, 44px); line-height:1.1; font-weight:700; color:var(--ink); }
+  #homeSub { margin:-12px 0 0; font-size:clamp(18px, 5vw, 22px); font-weight:600; color:var(--ink); opacity:.8; }
   #picks { display:flex; gap:18px; justify-content:center; }
   .pick { position:relative; width:min(40vw, 170px); aspect-ratio:1; border-radius:50%; padding:0; overflow:hidden;
     background:var(--cream); border:6px solid var(--r); display:grid; place-items:center; }
@@ -36,11 +38,11 @@
 
   /* ---------- game screen ---------- */
   #game-page { --top:46px;
-    --w:min(calc(100vw - 24px), calc((100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - var(--top) - 28px) * 0.7333));
+    --w:min(calc(100vw - 24px), calc((100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - var(--top) - 80px) * 0.7333));
     display:flex; flex-direction:column; align-items:center; gap:10px; }
   #hud { width:var(--w); height:var(--top); display:flex; justify-content:space-between; align-items:center; }
   #left { display:flex; align-items:center; gap:8px; }
-  #nextIcon { width:40px; height:40px; }
+  #nextIcon { width:42px; height:42px; }   /* heart preview (was 40px, +5%) */
   #count { font-weight:700; font-size:26px; color:var(--yellow); text-shadow:0 2px 0 rgba(0,0,0,.25); }
   #home { width:46px; height:46px; border-radius:50%; background:var(--cream);
     border:4px solid var(--ring); padding:0; display:grid; place-items:center; }
@@ -70,6 +72,32 @@
   #winStrip { display:flex; flex-wrap:wrap; justify-content:center; gap:3px; max-width:300px; }
   #winStrip canvas { width:22px; height:22px; }
 
+  /* credit line, bottom of every screen (12px x 0.8 = 9.6px) */
+  #credit { position:fixed; left:0; right:0; bottom:calc(env(safe-area-inset-bottom) + 16px); text-align:center;
+    z-index:10;
+    font-size:9.6px; font-weight:400; letter-spacing:.02em; color:#6b5a8a; pointer-events:none; }
+  body.lena #credit { color:#e4d9ff; }
+  body.miu #credit { color:#f3e2c8; }
+
+  /* try-again screen: pixel-art speech bubble + image */
+  .pbubble { position:relative; background:#fff; color:var(--ink); font-weight:700; font-size:17px; line-height:1.25;
+    padding:10px 14px; margin:4px 4px 16px; max-width:min(250px, 80%);
+    box-shadow:0 -4px 0 0 var(--ink), 0 4px 0 0 var(--ink), -4px 0 0 0 var(--ink), 4px 0 0 0 var(--ink); }
+  .pbubble svg { position:absolute; top:100%; left:calc(50% - 14px); width:28px; height:16px; shape-rendering:crispEdges; }
+  #tryImgBox { position:relative; width:calc(var(--w) * .34); aspect-ratio:1; border-radius:50%; overflow:hidden; flex:none;
+    background:rgba(255,255,255,.18); border:4px dashed var(--ring); display:grid; place-items:center; }
+  #tryImgBox span { font-size:14px; font-weight:600; opacity:.9; padding:6px; text-align:center; }
+  #tryImgBox img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  #over.reveal { animation:fadein .45s ease-out; }
+  @keyframes fadein { from { opacity:0; } to { opacity:1; } }
+
+  /* win transition: pixel balloons float up */
+  #balloons { position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:6; }
+  .balloon { position:absolute; bottom:0; will-change:transform; animation:rise var(--t) linear var(--d) both; }
+  .balloon img { display:block; image-rendering:pixelated; transform-origin:50% 90%; animation:bob 1.2s ease-in-out var(--d) infinite alternate; }
+  @keyframes rise { from { transform:translate(0, 100%); } to { transform:translate(var(--dx), calc(-1 * var(--h))); } }
+  @keyframes bob { from { transform:rotate(-5deg); } to { transform:rotate(5deg); } }
+
   /* swipe hint + countdown */
   .overlay.dim { background:rgba(0,0,0,.38); gap:16px; }
   #hint { position:relative; width:150px; height:150px; border-radius:30px; background:rgba(0,0,0,.3); border:4px solid var(--ring);
@@ -91,7 +119,10 @@
     <button class="pick" id="playLena" aria-label="Play Lena"><span>Lena</span><img id="imgLena" alt=""></button>
     <button class="pick" id="playMiu" aria-label="Play Miu"><span>Miu</span><img id="imgMiu" alt=""></button>
   </div>
+  <p id="homeSub">tap ur baby</p>
 </div>
+
+<div id="credit">@cupdooodles_</div>
 
 <div id="game-page" hidden>
   <div id="hud">
@@ -121,9 +152,21 @@
       <p>swipe to steer</p>
     </div>
     <div id="cd"></div>
+    <div id="balloons"></div>
     <div id="over" class="overlay">
       <h1 id="overTitle">Game over</h1>
       <p id="overText"></p>
+      <!-- TRY AGAIN SCREEN: pixel-art speech bubble above the image. Its text is TRY_TEXT in the script below. -->
+      <div id="tryBubble" class="pbubble" hidden><span id="tryText"></span>
+        <svg viewBox="0 0 7 4" aria-hidden="true">
+          <rect x="0" y="0" width="1" height="1" fill="#2b1b4a"/><rect x="1" y="0" width="5" height="1" fill="#fff"/><rect x="6" y="0" width="1" height="1" fill="#2b1b4a"/>
+          <rect x="1" y="1" width="1" height="1" fill="#2b1b4a"/><rect x="2" y="1" width="3" height="1" fill="#fff"/><rect x="5" y="1" width="1" height="1" fill="#2b1b4a"/>
+          <rect x="2" y="2" width="1" height="1" fill="#2b1b4a"/><rect x="3" y="2" width="1" height="1" fill="#fff"/><rect x="4" y="2" width="1" height="1" fill="#2b1b4a"/>
+          <rect x="3" y="3" width="1" height="1" fill="#2b1b4a"/>
+        </svg>
+      </div>
+      <!-- ===== TRY AGAIN IMAGE =====  Put your picture at  images/try-again.jpg  (square, face centered). Until then the dashed box shows. -->
+      <div id="tryImgBox" hidden><span>try again image</span><img id="tryAgainImg" src="images/try-again.jpg" alt="" onload="this.parentNode.style.borderStyle='solid';this.previousElementSibling.style.display='none'" onerror="this.remove()"></div>
       <img id="winPhoto" alt="" hidden>
       <div id="winStrip"></div>
       <div class="row">
@@ -144,7 +187,10 @@
    Winning screen photo (optional, one each):
      images/lena/final.jpg
      images/miu/final.jpg
-   Photo 1 is the snake's head. Photo 2 is the first food, and so on.
+   Try-again screen image ("try again image", optional):
+     images/try-again.jpg
+   Photo 1 is the snake's head at the start. Photo 2 is the first food, and so on.
+   Each newly eaten photo moves to the FRONT (head) and pushes the older photos back one spot.
    Square photos, face centered. A missing photo shows a placeholder.
    ============================================================ */
 const SETS = {
@@ -157,7 +203,12 @@ const STEP_MS = 210;        // time per move: bigger = slower snake
 const WRAP_WALLS = false;   // false: hitting an edge ends the game. true: snake wraps around
 const COLS = 11, ROWS = 15, CELL = 38;
 const HINT_MS = 2000;       // how long the swipe icon screen stays up
-const WIN_TITLE = { lena: "Happy 27th Birthday, Lalee!", miu: "Happy 25th Birthday, Miu!" };
+const WIN_TITLE = { lena: "Happy 27th Birthday, Lalee!", miu: "Happy 25th Birthday, Miumiu!" };
+const TRY_TEXT = "it's ok, grandma! u can try again! <3";   // speech bubble on the try-again screen
+const BALLOON_MS = 1700;    // how long the balloons float before the Happy Birthday screen appears
+/* FINAL IMAGE (winning screen, center circle): images/lena/final.jpg and images/miu/final.jpg.
+   If the file is missing, this "final image" placeholder circle shows instead. */
+const FINAL_PLACEHOLDER = "data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#fff6e5"/><text x="50" y="50" text-anchor="middle" dominant-baseline="middle" font-family="sans-serif" font-weight="700" font-size="12" fill="#2b1b4a">final image</text></svg>');
 /* ============================================================ */
 
 const cv = document.getElementById("game"), ctx = cv.getContext("2d");
@@ -176,6 +227,32 @@ function load(k) {
     im.onload = () => { images[i] = im; if (state === "play") updateIcon(); };
     im.src = `${set.folder}/${i}.${set.ext}`;
   }
+}
+
+/* heart-shaped photo (counter preview), centered on 0,0, r = half the heart's width */
+function heartPath(c, r) {
+  c.beginPath();
+  for (let i = 0; i <= 90; i++) {
+    const t = i / 90 * Math.PI * 2, s = r / 16;
+    const x = 16 * Math.pow(Math.sin(t), 3) * s;
+    const y = (-(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) - 2.5) * s;
+    i ? c.lineTo(x, y) : c.moveTo(x, y);
+  }
+  c.closePath();
+}
+function drawHeartPhoto(c, n, r) {
+  c.save(); heartPath(c, r); c.clip();
+  const im = images[n];
+  if (im) {
+    const s = Math.min(im.width, im.height);
+    c.drawImage(im, (im.width - s) / 2, (im.height - s) / 2, s, s, -r, -r, r * 2, r * 2);
+  } else {
+    c.fillStyle = `hsl(${(n * 23 + 320) % 360}, 80%, 80%)`; c.fillRect(-r, -r, r * 2, r * 2);
+    c.fillStyle = "#2b1b4a"; c.font = `700 ${Math.round(r * 0.8)}px Fredoka, sans-serif`;
+    c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(n, 0, 0);
+  }
+  c.restore();
+  heartPath(c, r - 1.5); c.lineWidth = 4; c.lineJoin = "round"; c.strokeStyle = "#fff6e5"; c.stroke();
 }
 
 /* round photo (or numbered placeholder) centered on 0,0 */
@@ -199,7 +276,7 @@ function drawPhoto(c, n, r, ring) {
 function updateIcon() {                       // the next photo, shown next to the counter
   const c = $("nextIcon").getContext("2d");
   c.clearRect(0, 0, 80, 80); c.save(); c.translate(40, 40);
-  drawPhoto(c, Math.min(collected + 1, set.count), 36); c.restore();
+  drawHeartPhoto(c, Math.min(collected + 1, set.count), 36); c.restore();
 }
 
 function buildStrip() {                       // collected photos, shown on the end screen
@@ -226,6 +303,7 @@ function start(k, skipIntro) {
   placeFood(); updateHud();
   $("over").classList.remove("show"); $("winPhoto").hidden = true; $("home-page").hidden = true; $("game-page").hidden = false;
   clearTimeout(cdTimer); $("cd").classList.remove("show");
+  clearBalloons();
   if (skipIntro) countdown();
   else { state = "ready"; $("intro").classList.add("show"); cdTimer = setTimeout(countdown, HINT_MS); }
 }
@@ -244,7 +322,7 @@ function countdown() {                                  // 3, 2, 1, then the sna
 }
 
 function backToMenu() {
-  clearTimeout(cdTimer); $("cd").classList.remove("show"); $("intro").classList.remove("show");
+  clearTimeout(cdTimer); clearBalloons(); $("cd").classList.remove("show"); $("intro").classList.remove("show");
   $("over").classList.remove("show"); $("winPhoto").hidden = true; $("game-page").hidden = true; $("home-page").hidden = false;
   state = "menu"; document.body.className = "";
 }
@@ -256,7 +334,7 @@ function placeFood() {
   food = free[Math.floor(Math.random() * free.length)];
 }
 
-function updateHud() { $("count").textContent = `x ${collected}/${set.count}`; updateIcon(); }
+function updateHud() { $("count").textContent = `${collected} / ${set.count}`; updateIcon(); }
 
 function turn(d) {
   if (state !== "play") return;
@@ -278,7 +356,7 @@ function step() {
 
   prev = snake.map(s => ({ ...s }));
   const next = [{ x: nx, y: ny }, ...snake.map(s => ({ ...s }))];
-  if (!ate) next.pop(); else prev.push({ ...snake[snake.length - 1] });
+  if (!ate) next.pop(); else prev = [{ ...snake[0] }, ...snake.map(s => ({ ...s }))];   // eating: the new photo slides in at the front, older photos stay put and shift back one
   snake = next;
 
   if (ate) {
@@ -290,7 +368,9 @@ function step() {
 
 function lose() {
   state = "over";
-  $("overTitle").textContent = "Awtsu! That's ok! try again beb! <3";
+  $("overTitle").hidden = true;                    // try-again screen uses the speech bubble instead of a title
+  $("tryText").textContent = TRY_TEXT; $("tryBubble").hidden = false; $("tryImgBox").hidden = false;
+  $("over").classList.remove("reveal");
   $("overText").textContent = "";
   $("again").textContent = "Try again";
   $("winPhoto").hidden = true;
@@ -298,14 +378,57 @@ function lose() {
 }
 function win() {
   state = "won";
+  $("overTitle").hidden = false; $("tryBubble").hidden = true; $("tryImgBox").hidden = true;
   $("overTitle").textContent = WIN_TITLE[key];
   $("overText").textContent = "";
   $("again").textContent = "Play again";
   const wp = $("winPhoto");                       // final photo: only shows if the file exists
-  wp.hidden = true; wp.onload = () => { wp.hidden = false; }; wp.onerror = () => { wp.hidden = true; };
+  wp.hidden = true; wp.onload = () => { wp.hidden = false; };   // final image: shows the photo, or the placeholder circle if the file is missing
+  wp.onerror = () => { wp.onerror = () => { wp.hidden = true; }; wp.src = FINAL_PLACEHOLDER; };
   wp.src = `${set.folder}/final.${set.ext}`;
-  buildStrip(); $("over").classList.add("show");
+  buildStrip();
+  launchBalloons();                               // balloons float up first, then the Happy Birthday screen is revealed
+  winTimer = setTimeout(() => $("over").classList.add("reveal", "show"), BALLOON_MS);
 }
+
+/* ---------- win transition: pixel-art balloons ---------- */
+let winTimer = 0, balloonTimer = 0;
+const BALLOON_COLORS = ["#ff8fb1", "#ffd84a", "#8fe3c0", "#c9b6ff", "#ff9f6b", "#7cc4ff"];
+const BALLOON_ART = [                       // 12 x 17 pixels: o outline, b body, h shine, . empty
+  "....oooo....", "..oobbbboo..", ".obhhbbbbbo.", ".obhbbbbbbo.", "obbhbbbbbbbo", "obbbbbbbbbbo",
+  "obbbbbbbbbbo", ".obbbbbbbbo.", ".obbbbbbbbo.", "..obbbbbbo..", "...obbbbo...", "....oooo....",
+  ".....oo.....", ".....o......", "......o.....", ".....o......", "......o....."
+];
+function balloonURL(color) {
+  let r = "";
+  BALLOON_ART.forEach((row, y) => [...row].forEach((ch, x) => {
+    const f = ch === "o" ? "#2b1b4a" : ch === "b" ? color : ch === "h" ? "#fff6e5" : null;
+    if (f) r += `<rect x="${x}" y="${y}" width="1" height="1" fill="${f}"/>`;
+  }));
+  return "data:image/svg+xml;utf8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 17" shape-rendering="crispEdges">${r}</svg>`);
+}
+function launchBalloons() {
+  const layer = $("balloons"), sw = $("screen").clientWidth, sh = $("screen").clientHeight;
+  layer.innerHTML = "";
+  const urls = BALLOON_COLORS.map(balloonURL), unit = Math.max(3, Math.round(sw / 70));
+  const WAVES = 13, WAVE_GAP = 0.13, RISE = 2.0;    // 13 rows of balloons, each row 0.13s after the last, so the whole screen is covered
+  const cols = Math.ceil(sw / (12 * unit * 0.7)), step = sw / cols;
+  for (let i = 0; i < WAVES * cols; i++) {
+    const k = Math.floor(i / cols), c = i % cols;
+    const u = Math.max(3, unit + [-1, 1, 3, 0, 2][(c * 3 + k * 2) % 5]), w = 12 * u;            // whole-pixel sizes keep the pixel art crisp
+    const b = document.createElement("div"); b.className = "balloon";
+    const im = new Image(); im.src = urls[i % urls.length]; im.width = w; im.height = 17 * u; im.alt = "";
+    b.appendChild(im);
+    b.style.left = ((c + 0.5 + (k % 2) * 0.5) * step - w / 2 + (Math.random() - .5) * 10) + "px";
+    b.style.setProperty("--t", (RISE + Math.random() * 0.05).toFixed(2) + "s");
+    b.style.setProperty("--d", (k * WAVE_GAP + Math.random() * 0.03).toFixed(2) + "s");
+    b.style.setProperty("--dx", Math.round((Math.random() - .5) * 30) + "px");
+    b.style.setProperty("--h", (sh + 20) + "px");
+    layer.appendChild(b);
+  }
+  clearTimeout(balloonTimer); balloonTimer = setTimeout(() => { layer.innerHTML = ""; }, 4000);
+}
+function clearBalloons() { clearTimeout(winTimer); clearTimeout(balloonTimer); $("balloons").innerHTML = ""; }
 
 /* ---------- input ---------- */
 window.addEventListener("keydown", e => {              // desktop: arrow keys / WASD point the snake
@@ -364,7 +487,7 @@ function render(now) {
   }
   // photos: tail first so the head sits on top
   for (let i = pts.length - 1; i >= 0; i--) {
-    ctx.save(); ctx.translate(pts[i].x, pts[i].y); drawPhoto(ctx, i + 1, CELL / 2 - 1, i === 0); ctx.restore();
+    ctx.save(); ctx.translate(pts[i].x, pts[i].y); drawPhoto(ctx, collected - i, CELL / 2 - 1, i === 0); ctx.restore();
   }
 }
 
