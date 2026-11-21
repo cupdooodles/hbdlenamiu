@@ -222,10 +222,15 @@ let lastStep = 0;
 const DIRS = { up:[0,-1], down:[0,1], left:[-1,0], right:[1,0] };
 function load(k) {
   set = SETS[k]; images = {};
-  for (let i = 1; i <= set.count; i++) {
+  const mySet = set;
+  for (let i = 1; i <= mySet.count; i++) {
     const im = new Image();
-    im.onload = () => { images[i] = im; if (state === "play") updateIcon(); };
-    im.src = `${set.folder}/${i}.${set.ext}`;
+    im.onload = () => {
+      if (set !== mySet) return;          // ignore photos from a previous baby
+      images[i] = im;
+      if (state !== "menu") updateIcon(); // redraw the heart as soon as the photo arrives
+    };
+    im.src = `${mySet.folder}/${i}.${mySet.ext}`;
   }
 }
 
