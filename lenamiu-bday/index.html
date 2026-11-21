@@ -46,7 +46,7 @@
   #count { font-weight:700; font-size:26px; color:var(--yellow); text-shadow:0 2px 0 rgba(0,0,0,.25); }
   #home { width:46px; height:46px; border-radius:50%; background:var(--cream);
     border:4px solid var(--ring); padding:0; display:grid; place-items:center; }
-  #home svg { width:24px; height:24px; }
+  #home svg { width:22px; height:28px; }
   #home:active { transform:translateY(2px); }
 
   /* the rectangle: grid paper that lines up with the game cells */
@@ -128,7 +128,7 @@
   <div id="hud">
     <div id="left"><canvas id="nextIcon" width="80" height="80"></canvas><span id="count"></span></div>
     <button id="home" aria-label="Back to home">
-      <svg viewBox="0 0 24 24"><path d="M3 12 12 4l9 8h-2.5v8h-5v-5h-3v5h-5v-8z" fill="#e8453c"/></svg>
+      <svg viewBox="0 0 11 14" shape-rendering="crispEdges" aria-hidden="true"><rect x="5" y="0" width="4" height="1" fill="#3d2b25"/><rect x="5" y="1" width="1" height="1" fill="#3d2b25"/><rect x="6" y="1" width="2" height="1" fill="#c9c4cc"/><rect x="8" y="1" width="1" height="1" fill="#3d2b25"/><rect x="5" y="2" width="1" height="1" fill="#3d2b25"/><rect x="6" y="2" width="2" height="1" fill="#c9c4cc"/><rect x="8" y="2" width="1" height="1" fill="#3d2b25"/><rect x="1" y="3" width="9" height="1" fill="#3d2b25"/><rect x="0" y="4" width="1" height="1" fill="#3d2b25"/><rect x="1" y="4" width="9" height="1" fill="#fcebd3"/><rect x="10" y="4" width="1" height="1" fill="#3d2b25"/><rect x="0" y="5" width="1" height="1" fill="#3d2b25"/><rect x="1" y="5" width="9" height="1" fill="#e0b48a"/><rect x="10" y="5" width="1" height="1" fill="#3d2b25"/><rect x="0" y="6" width="11" height="1" fill="#3d2b25"/><rect x="1" y="7" width="1" height="1" fill="#3d2b25"/><rect x="2" y="7" width="1" height="1" fill="#ffffff"/><rect x="3" y="7" width="6" height="1" fill="#f5d0a5"/><rect x="9" y="7" width="1" height="1" fill="#3d2b25"/><rect x="1" y="8" width="1" height="1" fill="#3d2b25"/><rect x="2" y="8" width="7" height="1" fill="#f5d0a5"/><rect x="9" y="8" width="1" height="1" fill="#3d2b25"/><rect x="1" y="9" width="1" height="1" fill="#3d2b25"/><rect x="2" y="9" width="7" height="1" fill="#f5d0a5"/><rect x="9" y="9" width="1" height="1" fill="#3d2b25"/><rect x="1" y="10" width="1" height="1" fill="#3d2b25"/><rect x="2" y="10" width="1" height="1" fill="#f5d0a5"/><rect x="3" y="10" width="1" height="1" fill="#6a4530"/><rect x="4" y="10" width="3" height="1" fill="#f5d0a5"/><rect x="7" y="10" width="1" height="1" fill="#6a4530"/><rect x="8" y="10" width="1" height="1" fill="#f5d0a5"/><rect x="9" y="10" width="1" height="1" fill="#3d2b25"/><rect x="1" y="11" width="1" height="1" fill="#3d2b25"/><rect x="2" y="11" width="2" height="1" fill="#f5d0a5"/><rect x="4" y="11" width="1" height="1" fill="#6a4530"/><rect x="5" y="11" width="1" height="1" fill="#f5d0a5"/><rect x="6" y="11" width="1" height="1" fill="#6a4530"/><rect x="7" y="11" width="2" height="1" fill="#f5d0a5"/><rect x="9" y="11" width="1" height="1" fill="#3d2b25"/><rect x="2" y="12" width="1" height="1" fill="#3d2b25"/><rect x="3" y="12" width="1" height="1" fill="#6a4530"/><rect x="4" y="12" width="1" height="1" fill="#f5d0a5"/><rect x="5" y="12" width="1" height="1" fill="#6a4530"/><rect x="6" y="12" width="1" height="1" fill="#f5d0a5"/><rect x="7" y="12" width="1" height="1" fill="#6a4530"/><rect x="8" y="12" width="1" height="1" fill="#3d2b25"/><rect x="2" y="13" width="7" height="1" fill="#3d2b25"/></svg>
     </button>
   </div>
 
@@ -473,7 +473,7 @@ function loop(now) {
 
 
 /* ---------- background heart: pixel-art OUTLINE (1 pixel = 1 grid cell) over the head photo, centered on the board ---------- */
-const BG_HEART = [                      // 9 x 9 cells, # = outline pixel
+const BG_HEART = [                      // 9 x 9 cells, # = outline pixel (same style as the sparkle-heart reference)
   ".###.###.",
   "#...#...#",
   "#.......#",
@@ -495,8 +495,8 @@ const BG_HEART_MASK = [                 // outline + inside: the area the head p
   "...###...",
   "....#...."
 ];
-const BG_HEART_COLOR = "#ff8fb1";       // outline color
-const BG_OPACITY = 0.55;                // photo + outline share this one opacity (1 = solid)
+const BG_HEART_COLOR = "#f48fb1";       // outline color
+const BG_OPACITY = 0.45;                // photo + outline share this one opacity (1 = solid)
 const BG_HEART_COL = Math.floor((COLS - BG_HEART[0].length) / 2);   // left cell of the heart
 const BG_HEART_ROW = Math.floor((ROWS - BG_HEART.length) / 2);      // top cell of the heart
 const bgW = BG_HEART[0].length * CELL, bgH = BG_HEART.length * CELL, bgBuf = document.createElement("canvas");
