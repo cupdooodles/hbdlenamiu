@@ -281,7 +281,9 @@ function drawPhoto(c, n, r, ring) {
 function updateIcon() {                       // the next photo, shown next to the counter
   const c = $("nextIcon").getContext("2d");
   c.clearRect(0, 0, 80, 80); c.save(); c.translate(40, 40);
-  drawHeartPhoto(c, Math.min(collected + 1, set.count), 36); c.restore();
+  // heart preview: photo 1 at the very start, then the next target once photo 2 has been eaten
+  const n = collected <= 1 ? 1 : Math.min(collected + 1, set.count);
+  drawHeartPhoto(c, n, 36); c.restore();
 }
 
 function buildStrip() {                       // collected photos, shown on the end screen
