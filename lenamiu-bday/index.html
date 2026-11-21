@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#7a5fc9">
+<title>Growing Up</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ---- colors: edit these ---- */
+  :root, body.lena { --bg:#7a5fc9; --line:rgba(255,255,255,.14); --ring:#c9b6ff; }  /* Lena: purple */
+  body.miu         { --bg:#a9744a; --line:rgba(255,255,255,.14); --ring:#e7c39a; }  /* Miu: brown  */
+  :root { --ink:#2b1b4a; --cream:#fff6e5; --yellow:#ffd84a; }
+
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; -webkit-user-select:none; user-select:none; }
+  html, body { margin:0; height:100%; overflow:hidden; background:var(--bg); color:#fff;
+    font-family:"Fredoka", system-ui, sans-serif; overscroll-behavior:none; touch-action:none; }
+  body { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+    padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+  button { font:inherit; color:var(--ink); touch-action:manipulation; cursor:pointer; }
+
+  [hidden] { display:none !important; }
+
+  /* ---------- home screen ---------- */
+  #home-page { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:30px; padding:20px; text-align:center; }
+  #home-page h1 { margin:0; font-size:clamp(30px, 9vw, 44px); line-height:1.1; font-weight:700; }
+  #picks { display:flex; gap:18px; justify-content:center; }
+  .pick { position:relative; width:min(40vw, 170px); aspect-ratio:1; border-radius:50%; padding:0; overflow:hidden;
+    background:var(--cream); border:6px solid var(--r); display:grid; place-items:center; }
+  .pick span { font-weight:700; font-size:24px; }
+  .pick img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .pick:active { transform:scale(.96); }
+  #playLena { --r:#c9b6ff; } #playMiu { --r:#e7c39a; }
+
+  /* ---------- game screen ---------- */
+  #game-page { --top:46px;
+    --w:min(calc(100vw - 24px), calc((100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - var(--top) - 28px) * 0.7333));
+    display:flex; flex-direction:column; align-items:center; gap:10px; }
+  #hud { width:var(--w); height:var(--top); display:flex; justify-content:space-between; align-items:center; }
+  #left { display:flex; align-items:center; gap:8px; }
+  #nextIcon { width:40px; height:40px; }
+  #count { font-weight:700; font-size:26px; color:var(--yellow); text-shadow:0 2px 0 rgba(0,0,0,.25); }
+  #home { width:46px; height:46px; border-radius:50%; background:var(--cream);
+    border:4px solid var(--ring); padding:0; display:grid; place-items:center; }
+  #home svg { width:24px; height:24px; }
+  #home:active { transform:translateY(2px); }
+
+  /* the rectangle: grid paper that lines up with the game cells */
+  #screen { position:relative; aspect-ratio:418/570; width:var(--w); border-radius:18px; overflow:hidden;
+    box-shadow:0 0 0 4px var(--ring); background-color:rgba(0,0,0,.14);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:calc(100% / 11) calc(100% / 15); }
+  canvas#game { width:100%; height:100%; display:block; }
+
+  /* overlays */
+  .overlay { position:absolute; inset:0; display:none; flex-direction:column; align-items:center;
+    justify-content:center; gap:14px; background:var(--bg); text-align:center; padding:18px; }
+  .overlay.show { display:flex; }
+  .overlay h1 { margin:0; font-size:32px; line-height:1.1; }
+  .overlay p { margin:0; font-size:17px; max-width:24ch; opacity:.95; }
+  .col { display:flex; flex-direction:column; gap:10px; align-items:center; }
+  .row { display:flex; gap:10px; }
+  .btn { font-weight:700; font-size:19px; background:var(--cream); border:4px solid var(--ring);
+    border-radius:999px; padding:9px 24px; }
+  .btn:active { transform:translateY(2px); background:var(--yellow); }
+  #winPhoto { width:calc(var(--w) * .46); aspect-ratio:1; object-fit:cover; border-radius:50%;
+    border:5px solid var(--ring); background:var(--cream); flex:none; }
+  #winStrip { display:flex; flex-wrap:wrap; justify-content:center; gap:3px; max-width:300px; }
+  #winStrip canvas { width:22px; height:22px; }
+
+  /* swipe hint + countdown */
+  .overlay.dim { background:rgba(0,0,0,.38); gap:16px; }
+  #hint { position:relative; width:150px; height:150px; border-radius:30px; background:rgba(0,0,0,.3); border:4px solid var(--ring);
+    display:grid; place-items:center; }
+  #hint svg { width:96px; height:96px; }
+  #hint img { position:absolute; inset:22px; width:calc(100% - 44px); height:calc(100% - 44px); object-fit:contain; }
+  .overlay.dim p { font-size:22px; font-weight:700; }
+  #cd { position:absolute; inset:0; display:none; place-items:center; pointer-events:none;
+    font-size:clamp(96px, 34vw, 160px); font-weight:700; color:var(--yellow); text-shadow:0 5px 0 rgba(0,0,0,.3); }
+  #cd.show { display:grid; }
+  #cd.pop { animation:pop .45s ease-out; }
+  @keyframes pop { from { transform:scale(.4); opacity:0; } to { transform:scale(1); opacity:1; } }
+</style>
+</head>
+<body>
+<div id="home-page">
+  <h1>watch them grow up</h1>
+  <div id="picks">
+    <button class="pick" id="playLena" aria-label="Play Lena"><span>Lena</span><img id="imgLena" alt=""></button>
+    <button class="pick" id="playMiu" aria-label="Play Miu"><span>Miu</span><img id="imgMiu" alt=""></button>
+  </div>
+</div>
+
+<div id="game-page" hidden>
+  <div id="hud">
+    <div id="left"><canvas id="nextIcon" width="80" height="80"></canvas><span id="count"></span></div>
+    <button id="home" aria-label="Back to home">
+      <svg viewBox="0 0 24 24"><path d="M3 12 12 4l9 8h-2.5v8h-5v-5h-3v5h-5v-8z" fill="#e8453c"/></svg>
+    </button>
+  </div>
+
+  <div id="screen">
+    <canvas id="game"></canvas>
+    <div id="intro" class="overlay dim">
+      <div id="hint" aria-hidden="true">
+        <svg viewBox="0 0 120 120" fill="none">
+          <g stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 24h58M12 24l9-8M12 24l9 8"/>
+            <path d="M12 46h58M70 46l-9-8M70 46l-9 8"/>
+          </g>
+          <g fill="#fff">
+            <rect x="73" y="38" width="15" height="40" rx="7.5"/>
+            <rect x="60" y="64" width="46" height="46" rx="20"/>
+            <ellipse cx="62" cy="82" rx="8" ry="15" transform="rotate(-28 62 82)"/>
+          </g>
+        </svg>
+        <img src="images/swipe.png" alt="" onload="this.previousElementSibling.style.display='none'" onerror="this.remove()">
+      </div>
+      <p>swipe to steer</p>
+    </div>
+    <div id="cd"></div>
+    <div id="over" class="overlay">
+      <h1 id="overTitle">Game over</h1>
+      <p id="overText"></p>
+      <img id="winPhoto" alt="" hidden>
+      <div id="winStrip"></div>
+      <div class="row">
+        <button class="btn" id="again">Try again</button>
+        <button class="btn" id="toMenu">Home</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script>
+/* ============================================================
+   CONFIG – the part you edit  (colors are at the top of the CSS)
+   ------------------------------------------------------------
+   Photos go in these folders, numbered in order (1 = baby):
+     images/lena/1.jpg … 27.jpg
+     images/miu/1.jpg  … 25.jpg
+   Winning screen photo (optional, one each):
+     images/lena/final.jpg
+     images/miu/final.jpg
+   Photo 1 is the snake's head. Photo 2 is the first food, and so on.
+   Square photos, face centered. A missing photo shows a placeholder.
+   ============================================================ */
+const SETS = {
+  lena: { name: "Lena", folder: "images/lena", ext: "jpg", count: 27 },
+  miu:  { name: "Miu",  folder: "images/miu",  ext: "jpg", count: 25 }
+  // Home screen circle = images/lena/home.jpg and images/miu/home.jpg
+  // (if home.jpg is missing, photo 1 is used instead)
+};
+const STEP_MS = 210;        // time per move: bigger = slower snake
+const WRAP_WALLS = false;   // false: hitting an edge ends the game. true: snake wraps around
+const COLS = 11, ROWS = 15, CELL = 38;
+const HINT_MS = 2000;       // how long the swipe icon screen stays up
+const WIN_TITLE = { lena: "Happy 27th Birthday, Lalee!", miu: "Happy 25th Birthday, Miu!" };
+/* ============================================================ */
+
+const cv = document.getElementById("game"), ctx = cv.getContext("2d");
+const W = COLS * CELL, H = ROWS * CELL, dpr = Math.min(window.devicePixelRatio || 1, 2);
+cv.width = W * dpr; cv.height = H * dpr; ctx.scale(dpr, dpr);
+const $ = id => document.getElementById(id);
+
+let key = null, set = null, images = {};
+let snake, prev, dir, queue, food, collected = 0, state = "menu"; // menu | play | over | won
+let lastStep = 0;
+const DIRS = { up:[0,-1], down:[0,1], left:[-1,0], right:[1,0] };
+function load(k) {
+  set = SETS[k]; images = {};
+  for (let i = 1; i <= set.count; i++) {
+    const im = new Image();
+    im.onload = () => { images[i] = im; if (state === "play") updateIcon(); };
+    im.src = `${set.folder}/${i}.${set.ext}`;
+  }
+}
+
+/* round photo (or numbered placeholder) centered on 0,0 */
+function drawPhoto(c, n, r, ring) {
+  c.save();
+  c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2); c.clip();
+  const im = images[n];
+  if (im) {
+    const s = Math.min(im.width, im.height);
+    c.drawImage(im, (im.width - s) / 2, (im.height - s) / 2, s, s, -r, -r, r * 2, r * 2);
+  } else {
+    c.fillStyle = `hsl(${(n * 23 + 320) % 360}, 80%, 80%)`; c.fillRect(-r, -r, r * 2, r * 2);
+    c.fillStyle = "#2b1b4a"; c.font = `700 ${Math.round(r * 0.95)}px Fredoka, sans-serif`;
+    c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(n, 0, r * 0.06);
+  }
+  c.restore();
+  c.beginPath(); c.arc(0, 0, r - 1.2, 0, Math.PI * 2);
+  c.lineWidth = ring ? 4 : 3; c.strokeStyle = ring ? "#ffd84a" : "#fff6e5"; c.stroke();
+}
+
+function updateIcon() {                       // the next photo, shown next to the counter
+  const c = $("nextIcon").getContext("2d");
+  c.clearRect(0, 0, 80, 80); c.save(); c.translate(40, 40);
+  drawPhoto(c, Math.min(collected + 1, set.count), 36); c.restore();
+}
+
+function buildStrip() {                       // collected photos, shown on the end screen
+  const strip = $("winStrip"); strip.innerHTML = "";
+  for (let i = 1; i <= set.count; i++) {
+    const c = document.createElement("canvas"); c.width = c.height = 44;
+    const x = c.getContext("2d"); x.translate(22, 22);
+    if (i <= collected) drawPhoto(x, i, 20);
+    else {
+      x.beginPath(); x.arc(0, 0, 20, 0, Math.PI * 2); x.fillStyle = "rgba(255,255,255,.12)"; x.fill();
+      x.lineWidth = 2.5; x.setLineDash([5, 4]); x.strokeStyle = "rgba(255,255,255,.4)"; x.stroke();
+    }
+    strip.appendChild(c);
+  }
+}
+
+let cdTimer = 0;
+function start(k, skipIntro) {
+  key = k; load(k);
+  document.body.className = k;
+  const cx = Math.floor(COLS / 2), cy = Math.floor(ROWS / 2);
+  snake = [{ x: cx, y: cy }]; prev = [{ x: cx, y: cy }];
+  dir = "right"; queue = []; collected = 1;
+  placeFood(); updateHud();
+  $("over").classList.remove("show"); $("winPhoto").hidden = true; $("home-page").hidden = true; $("game-page").hidden = false;
+  clearTimeout(cdTimer); $("cd").classList.remove("show");
+  if (skipIntro) countdown();
+  else { state = "ready"; $("intro").classList.add("show"); cdTimer = setTimeout(countdown, HINT_MS); }
+}
+
+function countdown() {                                  // 3, 2, 1, then the snake starts moving
+  $("intro").classList.remove("show");
+  state = "count";
+  let n = 3; const cd = $("cd");
+  const tick = () => {
+    if (n === 0) { cd.classList.remove("show"); state = "play"; lastStep = performance.now(); return; }
+    cd.textContent = n; cd.classList.add("show");
+    cd.classList.remove("pop"); void cd.offsetWidth; cd.classList.add("pop");
+    n--; cdTimer = setTimeout(tick, 800);
+  };
+  tick();
+}
+
+function backToMenu() {
+  clearTimeout(cdTimer); $("cd").classList.remove("show"); $("intro").classList.remove("show");
+  $("over").classList.remove("show"); $("winPhoto").hidden = true; $("game-page").hidden = true; $("home-page").hidden = false;
+  state = "menu"; document.body.className = "";
+}
+
+function placeFood() {
+  const free = [];
+  for (let x = 0; x < COLS; x++) for (let y = 0; y < ROWS; y++)
+    if (!snake.some(s => s.x === x && s.y === y)) free.push({ x, y });
+  food = free[Math.floor(Math.random() * free.length)];
+}
+
+function updateHud() { $("count").textContent = `x ${collected}/${set.count}`; updateIcon(); }
+
+function turn(d) {
+  if (state !== "play") return;
+  const last = queue.length ? queue[queue.length - 1] : dir;
+  const a = DIRS[d], b = DIRS[last];
+  if (a[0] + b[0] === 0 && a[1] + b[1] === 0) return; // no U-turns
+  if (d !== last && queue.length < 2) queue.push(d);
+}
+function step() {
+  if (queue.length) dir = queue.shift();
+  const [dx, dy] = DIRS[dir];
+  let nx = snake[0].x + dx, ny = snake[0].y + dy;
+  if (WRAP_WALLS) { nx = (nx + COLS) % COLS; ny = (ny + ROWS) % ROWS; }
+  else if (nx < 0 || ny < 0 || nx >= COLS || ny >= ROWS) return lose();
+
+  const ate = nx === food.x && ny === food.y;
+  const body = ate ? snake : snake.slice(0, -1);        // tail moves away unless growing
+  if (body.some(s => s.x === nx && s.y === ny)) return lose();
+
+  prev = snake.map(s => ({ ...s }));
+  const next = [{ x: nx, y: ny }, ...snake.map(s => ({ ...s }))];
+  if (!ate) next.pop(); else prev.push({ ...snake[snake.length - 1] });
+  snake = next;
+
+  if (ate) {
+    collected++; updateHud();
+    if (collected >= set.count) return win();
+    placeFood();
+  }
+}
+
+function lose() {
+  state = "over";
+  $("overTitle").textContent = "Awtsu! That's ok! try again beb! <3";
+  $("overText").textContent = "";
+  $("again").textContent = "Try again";
+  $("winPhoto").hidden = true;
+  buildStrip(); $("over").classList.add("show");
+}
+function win() {
+  state = "won";
+  $("overTitle").textContent = WIN_TITLE[key];
+  $("overText").textContent = "";
+  $("again").textContent = "Play again";
+  const wp = $("winPhoto");                       // final photo: only shows if the file exists
+  wp.hidden = true; wp.onload = () => { wp.hidden = false; }; wp.onerror = () => { wp.hidden = true; };
+  wp.src = `${set.folder}/final.${set.ext}`;
+  buildStrip(); $("over").classList.add("show");
+}
+
+/* ---------- input ---------- */
+window.addEventListener("keydown", e => {              // desktop: arrow keys / WASD point the snake
+  const m = { ArrowUp:"up", ArrowDown:"down", ArrowLeft:"left", ArrowRight:"right", w:"up", s:"down", a:"left", d:"right" };
+  if (m[e.key]) { e.preventDefault(); turn(m[e.key]); }
+});
+let sx = 0, sy = 0, tracking = false;                   // swipe anywhere on the board to steer
+const scr = $("screen");
+scr.addEventListener("pointerdown", e => { sx = e.clientX; sy = e.clientY; tracking = true; });
+scr.addEventListener("pointermove", e => {
+  if (!tracking) return;
+  const dx = e.clientX - sx, dy = e.clientY - sy;
+  if (Math.max(Math.abs(dx), Math.abs(dy)) < 20) return;
+  turn(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "right" : "left") : (dy > 0 ? "down" : "up"));
+  sx = e.clientX; sy = e.clientY;                        // so a long swipe can chain turns
+});
+["pointerup", "pointercancel", "pointerleave"].forEach(ev => scr.addEventListener(ev, () => { tracking = false; }));
+function setHome(img, p) {                              // home.jpg, or photo 1 if there is no home.jpg
+  img.onerror = () => { img.onerror = () => img.remove(); img.src = `${p.folder}/1.${p.ext}`; };
+  img.src = `${p.folder}/home.${p.ext}`;
+}
+setHome($("imgLena"), SETS.lena); setHome($("imgMiu"), SETS.miu);
+$("playLena").onclick = () => start("lena");
+$("playMiu").onclick = () => start("miu");
+$("again").onclick = () => start(key, true);   // retry goes straight to the countdown
+$("toMenu").onclick = backToMenu;
+$("home").onclick = backToMenu;
+
+/* ---------- loop ---------- */
+function loop(now) {
+  requestAnimationFrame(loop);
+  if (state === "play" && now >= lastStep + STEP_MS) { step(); lastStep += STEP_MS; if (now - lastStep > STEP_MS) lastStep = now; }
+  render(now);
+}
+
+function render(now) {
+  ctx.clearRect(0, 0, W, H);
+  if (!snake || state === "menu") return;
+  const t = state === "play" ? Math.min(1, Math.max(0, (now - lastStep) / STEP_MS)) : 1;
+
+  // food: the next photo
+  const pulse = 1 + Math.sin(now / 220) * 0.07, fx = (food.x + .5) * CELL, fy = (food.y + .5) * CELL;
+  ctx.save(); ctx.translate(fx, fy); ctx.scale(pulse, pulse);
+  drawPhoto(ctx, collected + 1, CELL / 2 - 2); ctx.restore();
+
+  // snake position of each segment, smoothed between steps
+  const pts = snake.map((b, i) => {
+    const a = prev[i] || b, jump = Math.abs(a.x - b.x) > 1 || Math.abs(a.y - b.y) > 1;
+    return { x: ((jump ? b.x : a.x + (b.x - a.x) * t) + .5) * CELL, y: ((jump ? b.y : a.y + (b.y - a.y) * t) + .5) * CELL };
+  });
+
+  // cream body line under the photos
+  if (pts.length > 1) {
+    ctx.save(); ctx.lineCap = ctx.lineJoin = "round"; ctx.lineWidth = CELL * 0.62; ctx.strokeStyle = "#f4efd8";
+    ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.stroke(); ctx.restore();
+  }
+  // photos: tail first so the head sits on top
+  for (let i = pts.length - 1; i >= 0; i--) {
+    ctx.save(); ctx.translate(pts[i].x, pts[i].y); drawPhoto(ctx, i + 1, CELL / 2 - 1, i === 0); ctx.restore();
+  }
+}
+
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
